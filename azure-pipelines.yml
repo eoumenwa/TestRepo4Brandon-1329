@@ -3,8 +3,6 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-name: $(Date:yyyyMMddHHmm)-$(Rev:r)
-
 resources:
   repositories:
     - repository: TestRepo4Brandon-1329
