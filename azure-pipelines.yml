@@ -9,7 +9,7 @@ resources:
       type: github
       name: eoumenwa/TestRepo4Brandon-1329
       ref: master
-      endpoint: 
+    
       
 trigger: none
 
@@ -321,7 +321,6 @@ stages:
           - name: AdGroup:JudicialOfficeHolder
             value: $(adgroup-judicialofficeholder)
 
-steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
 
