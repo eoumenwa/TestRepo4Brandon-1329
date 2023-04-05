@@ -9,6 +9,7 @@ resources:
       type: github
       name: eoumenwa/TestRepo4Brandon-1329
       ref: master
+      endpoint: na
     
       
 trigger: none
