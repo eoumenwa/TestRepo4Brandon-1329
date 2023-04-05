@@ -1,118 +1,22 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+name: Pull Request Trigger
 
-resources:
-  repositories:
-    - repository: TestRepo4Brandon-1329
-      type: github
-      name: eoumenwa/TestRepo4Brandon-1329
-      ref: master
-      endpoint: na
-    
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
       
-trigger: none
-
-pr:
-  - master
-
-pool: 
-  vmImage: ubuntu-22.04
-
-
-stages:
-####################################################
-# CI Build Checks. #################################
-- stage: CI_Build
-  displayName: CI Build
-  variables: 
-  - template: variables/shared.yaml
-  jobs:
-  - job: CI_Helm
-    displayName: "Helm CI"
-    steps:
-    - checkout: self
-
-    - template: templates\Containerisation\helm\helm-lint.yaml@azTemplates
-      parameters:
-        chartPath: ${{ variables.chartPath }}
-        chartValuesPath: ${{ variables.chartPath }}
-
-  - job: UnitTests
-    displayName: "Unit Tests"
-    steps:
-    - checkout: self
-
-    - template: templates/sonarCloud/prepare.yml@azTemplates
-      parameters:
-        ExtraProperties: |
-          sonar.cs.opencover.reportsPaths=$(Common.TestResultsDirectory)/Coverage/coverage.opencover.xml
-          sonar.coverage.exclusions=**/UserApi/Swagger/**,**/Program.cs,**/Startup.cs,**/Testing.Common/**,**/UserApi.Common/**,**/UserApi.IntegrationTests/**,**/UserApi.UnitTests/**,**/UserApi/Helper/**,**/UserApi/ConfigureServicesExtensions.cs,**/UserApi/Extensions/**
-          sonar.cpd.exclusions=**/Program.cs,**/Startup.cs,**/Testing.Common/**,**/UserApi/Swagger/**
-
-    - template: stages\dotnet-tests\unit-tests.yml@azTemplates
-      parameters:
-        #vstsFeedId: 'Video Hearings/vh-packages'
-        dotnetCoreVersion: '6.x'
-        nugetConfigPath: ${{ variables.appName }} # Temp - Change To SDS Feed When Possible.
-        unitTestProjectPath: "${{ variables.appName }}/${{ variables.appName }}.UnitTests"
-        coverletCoverageExclusions:
-          - "[UserApi.*Tests?]*"
-          - "[UserApi.API]Startup"
-          - "[UserApi.Common]*"
-          - "[Testing.Common]*"
-
-    - template: templates/sonarCloud/runAnalysis.yml@azTemplates
-
-#####################################################
-# Build Docker Image & Generate EF Script. ##########
-- stage: Dock
-  displayName: Docker Build & Push Image
-  variables: 
-  - group: aks-cluster-info
-  - template: variables/dev.yaml
-  - template: variables/shared.yaml
-    parameters:
-      env: ${{ variables.env }}
-  - group: vh-github-app-credentials
-  jobs:
-  - job: Dock
-    displayName: "Build and Push Image ${{ variables.git_repo_name }}"
-    steps:
-    - checkout: self
-
-    - template: templates\Github\get-app-token.yaml@azTemplates
-      parameters:
-        privateKeyFileName: ${{ variables.gh_app_private_key_file_name }}
-        appId: $(gh_app_app_id)
-
-    - template: templates\Github\bump-chart-versions.yaml@azTemplates
-      parameters:
-        chartName: ${{ variables.chartName }}
-        chartPath: $(Build.SourcesDirectory)
-        chartBranch: $(System.PullRequest.SourceBranch)
-        githubToken: $(githubappinstall.token)
-        githubUsername: $(gh_app_name)
-        githubEmail: "$(gh_app_app_id)+$(gh_app_name)[bot]@users.noreply.github.com"
-    
-    - bash: |
-        sed -i "s|</configuration>|<packageSourceCredentials><vh-packages><add key=\"Username\" value=\"PAT\" /><add key=\"ClearTextPassword\" value=\"$(System.AccessToken)\" /></vh-packages></packageSourceCredentials></configuration>|" nuget.config
-      displayName: Add NuGet Feed Authentication
-      workingDirectory: ${{ variables.appName }}
-
-    - template: templates\Containerisation\docker\docker-compose.yaml@azTemplates
-      parameters:
-        azureSubscription: ${{ variables.acrSubscription }}
-        acrName: ${{ variables.acrName }}
-        repositoryName:  ${{ variables.repositoryName }}
-
-    - template: templates\Containerisation\docker\docker-push-azure.yaml@azTemplates
-      parameters:
-        azureSubscription: ${{ variables.acrSubscription }}
-        acrName: ${{ variables.acrName }}
-        repositoryName:  ${{ variables.repositoryName }}
-        imageName: "${{ replace(variables.git_repo_name, '-', '') }}"
-        imageTags:
-          - '${{ variables.prTagName }}'
-
+    - name: Run tests
+      run: |
+        # Add your test commands here
+        
+    - name: Deploy
+      uses: some-action-for-deployment@v1
+      with:
+        # Add your deployment configuration here
